@@ -1,6 +1,8 @@
-version: "3"
+version: "3.6"
 services:
+  #
   api-gateway:
+    container_name: "ms_api-gateway"
     build: "./api-gateway"
     depends_on:
       - listings-service
@@ -10,7 +12,30 @@ services:
     volumes:
       - ./api-gateway:/opt/app
 
+    entrypoint: "./entrypoint.sh"
+
+  #
+  front-app:
+    container_name: "ms_front-app"
+    build: "./classifieds-app"
+    ports:
+      - "7001:7001"
+      - "1234:1234"
+      - "1235:1235"
+    volumes:
+      - ./classifieds-app:/opt/app
+
+      - type: bind
+        source: ./classifieds-app/.env.example
+        target: /opt/app/.env
+
+    entrypoint: "./entrypoint.sh"
+    environment:
+      - CHOKIDAR_USEPOLLING=1
+
+  #
   listings-service:
+    container_name: "ms_listings_api"
     build: "./listings-service"
     depends_on:
       - listings-service-db
@@ -20,8 +45,11 @@ services:
       - "7100:7100"
     volumes:
       - ./listings-service:/opt/app
+    entrypoint: "./entrypoint.sh"
 
+  #
   listings-service-db:
+    container_name: "ms_listings_db"
     environment:
       - MYSQL_ROOT_PASSWORD=password
       - MYSQL_DATABASE=db
@@ -29,7 +57,9 @@ services:
     ports:
       - 0.0.0.0:7200:3306
 
+  #
   users-service:
+    container_name: "ms_users_api"
     build: "./users-service"
     depends_on:
       - users-service-db
@@ -39,8 +69,11 @@ services:
       - "7101:7101"
     volumes:
       - ./users-service:/opt/app
+    entrypoint: "./entrypoint.sh"
 
+  #
   users-service-db:
+    container_name: "ms_users_db"
     environment:
       - MYSQL_ROOT_PASSWORD=password
       - MYSQL_DATABASE=db
